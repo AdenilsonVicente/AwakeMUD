@@ -684,6 +684,40 @@ struct char_data
     for (int i = 0; i < NUM_WEARS; i++)
       equipment[i] = NULL;
   }
+  
+  rnum_t get_in_room(bool silence_warnings = FALSE) {
+    if (in_room != NOWHERE)
+      return in_room;
+    
+    char warnbuf[MAX_STRING_LENGTH];
+    
+    if (in_veh) {
+      if (!silence_warnings) {
+        sprintf(warnbuf, "WARNING: get_in_room() called on character '%s' (%ld), who is in a vehicle. Will return vehicle's room.",
+                player.char_name, char_specials.idnum);
+        mudlog(warnbuf, NULL, LOG_SYSLOG, TRUE);
+      }
+      
+      struct veh_data *tveh = in_veh;
+      while (tveh->in_veh)
+        tveh = tveh->in_veh;
+      if (tveh->in_room != NOWHERE) {
+        return tveh->in_room;
+      }
+      else {
+        sprintf(warnbuf, "ERROR: get_in_room(): '%s' (%ld)'s vehicle has no room. Returning NOWHERE. MUD crash is likely.",
+                player.char_name, char_specials.idnum);
+        mudlog(warnbuf, NULL, LOG_SYSLOG, TRUE);
+        return NOWHERE;
+      }
+    }
+    
+    sprintf(warnbuf, "ERROR: get_in_room() called on character '%s' (%ld), who is neither in a valid room nor vehicle. "
+                     "Returning NOWHERE. MUD crash is likely.",
+                     player.char_name, char_specials.idnum);
+    mudlog(warnbuf, NULL, LOG_SYSLOG, TRUE);
+    return NOWHERE;
+  }
 };
 /* ====================================================================== */
 
